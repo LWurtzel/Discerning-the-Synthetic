@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spot the AI Image</title>
+<style>
+body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#0d1117;color:#e6edf3;margin:0;padding:24px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:1.5rem;margin:0 0 4px;text-align:center}
+.sub{color:#9aa4af;font-size:.9rem;margin-bottom:20px;text-align:center;max-width:520px}
+#status{margin:40px;font-size:1.1rem;color:#9aa4af;text-align:center}
+#game{display:none;flex-direction:column;align-items:center}
+#round{color:#9aa4af;margin-bottom:8px}
+#photo{width:340px;height:340px;object-fit:cover;border-radius:10px;border:1px solid #30363d;background:#161b22}
+.btns{margin:16px 0;display:flex;gap:10px}
+button{font-size:1rem;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;color:#fff}
+.real{background:#238636}.fake{background:#da3633}.skip{background:#484f58}.next{background:#1f6feb}
+button:disabled{opacity:.4;cursor:default}
+#reveal{min-height:120px;text-align:center;line-height:1.7}
+.score{font-weight:bold;margin-top:8px}.ok{color:#3fb950}.no{color:#f85149}
+</style></head><body>
+<h1>Spot the AI Image</h1>
+<div class="sub">You vs. a neural network. Real photo or AI-generated? The model trained on some image generators but not others &mdash; watch it slip on the ones it never saw.</div>
+<div id="status">Loading model (~90 MB, one time)&hellip;</div>
+<div id="game">
+<div id="round"></div>
+<img id="photo" alt="">
+<div class="btns">
+<button class="real" id="bReal">Real</button>
+<button class="fake" id="bFake">Fake</button>
+<button class="skip" id="bSkip">Skip</button>
+<button class="next" id="bNext" disabled>Next &#9654;</button>
+</div>
+<div id="reveal"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+<script>
+const TRAINED=new Set(["stable_diffusion_v_1_4","glide","BigGAN"]);
+const ROUNDS=10; let model,pool,S;
+const $=id=>document.getElementById(id);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+async function init(){
+try{
+model=await tf.loadLayersModel('model/model.json');
+const m=await (await fetch('manifest.json')).json();
+$('status').style.display='none';$('game').style.display='flex';start(m);
+}catch(e){$('status').textContent='Error loading model: '+e.message;}
+}
+function start(m){
+const reals=shuffle(m.filter(x=>x.label==='real')).slice(0,ROUNDS);
+const fakes=shuffle(m.filter(x=>x.label==='fake')).slice(0,ROUNDS);
+pool=shuffle([...reals,...fakes]);S={i:0,human:0,machine:0,played:0};showRound();
+}
+function showRound(){
+const it=pool[S.i];$('round').textContent=`Round ${S.played+1} of ${ROUNDS}`;
+$('photo').src='images/'+it.file;$('reveal').innerHTML='';toggle(true);
+}
+function toggle(g){$('bReal').disabled=!g;$('bFake').disabled=!g;$('bSkip').disabled=!g;$('bNext').disabled=g;}
+async function predict(){
+const x=tf.tidy(()=>tf.browser.fromPixels($('photo')).resizeBilinear([224,224]).toFloat().div(127.5).sub(1).expandDims(0));
+const out=model.predict(x);const p=(await out.data())[0];x.dispose();out.dispose();return p;
+}
+async function guess(choice){
+toggle(false);const it=pool[S.i];const p=await predict();
+const mPred=p>=0.5?'real':'fake';const hOk=choice===it.label,mOk=mPred===it.label;
+S.human+=hOk;S.machine+=mOk;S.played++;
+const gen=it.label==='fake'?`${it.generator} — ${TRAINED.has(it.generator)?'trained':'UNSEEN'}`:'real photo';
+$('reveal').innerHTML=`Truth: <b>${it.label.toUpperCase()}</b> [${gen}]<br>You: ${choice.toUpperCase()} <span class="${hOk?'ok':'no'}">${hOk?'\u2713':'\u2717'}</span><br>Model: ${mPred.toUpperCase()} (p=${p.toFixed(2)}) <span class="${mOk?'ok':'no'}">${mOk?'\u2713':'\u2717'}</span><div class="score">You ${S.human}/${S.played} &middot; Model ${S.machine}/${S.played}</div>`;
+}
+function advance(){
+S.i++;
+if(S.played>=ROUNDS||S.i>=pool.length){
+$('round').textContent='Final';$('photo').style.display='none';document.querySelector('.btns').style.display='none';
+$('reveal').innerHTML=`<b>Final score</b><div class="score">You ${S.human}/${S.played} &middot; Model ${S.machine}/${S.played}</div>`;
+}else showRound();
+}
+$('bReal').onclick=()=>guess('real');$('bFake').onclick=()=>guess('fake');
+$('bSkip').onclick=advance;$('bNext').onclick=advance;init();
+</script></body></html>
