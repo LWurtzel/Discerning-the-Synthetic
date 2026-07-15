@@ -5,7 +5,7 @@
 
 ![Model comparison across generators](cifake_vs_genimage_generalization.png)
 
-*A detector trained on a single generator collapses to chance on unseen generators (red); a detector trained across multiple generators generalizes far better (green). ★ marks generators the multi-generator model trained on.*
+*A detector trained on a single generator collapses to chance on unseen generators (red); a detector trained across multiple generators generalizes far better (green). ★ marks generators the given model trained on.*
 
 ## Repository contents
 - **`CIFAKE_CNN.ipynb`** — from-scratch CNN trained on the CIFAKE dataset (single-generator baseline).
