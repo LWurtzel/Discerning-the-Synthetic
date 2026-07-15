@@ -13,7 +13,9 @@
 - **`spot_the_ai_game_all_generators.ipynb`** — the human-vs-model game as a self-contained notebook (auto-downloads the model and images).
 - **`docs/`** — the browser-based game (served via GitHub Pages).
 - **`cifake_vs_genimage_generalization.png`, `cifake_to_genimage_collapse.png`** — result figures.
+- **Analysis figures** — `confusion_matrix.png` (2×2: the model is cautious, catching only about 61% of fake images but 96% of real images), `source_breakdown.png` (9×2 per-generator: fakes from unseen generators like ADM/VQDM/Midjourney slip through the most often), and `gradcam.png` (interpretability: the detector attends to the rendered subject, not the background). Discussed in detail in the slides.
 - **Slides** — presentation covering the problem, approach, and findings.
+
 
 ## Models
 The trained CNNs are attached as assets under **[Releases](https://github.com/LWurtzel/Discerning-the-Synthetic/releases)** (too large for the repo). The notebooks and the website download them automatically.
