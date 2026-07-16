@@ -16,7 +16,7 @@ I built two "AI-image detectors" and stress-tested how well they **generalize to
 
 - A from-scratch CNN trained on **CIFAKE** (one generator, Stable Diffusion 1.4) reaches **~95% accuracy** on held-out data from that same generator — but that accuracy **collapses to ~47% (worse than guessing) on eight other generators.** It learned one generator's fingerprint, not a general idea of what is "AI-generated."
 - A **ResNet50V2** transfer-learning model trained across **three** generators from the larger **GenImage** dataset generalizes much better — **~79% macro average accuracy across all eight generators** — but still reaches lower accuracies on the generators it didn't train on.
-- The failure is **systematic, not random:** the stronger model is cautious. It gets **96% of real photos correct**, but catches only **~64% of fakes**, and the fakes it misses come overwhelmingly from **unseen generators** which it labels "real."
+- The failure is **systematic, not random:** the stronger model is cautious. It gets **96% of real photos correct**, but catches only **~61% of fakes**, and the fakes it misses come overwhelmingly from **unseen generators** which it labels "real."
 - You can trade off which errors it makes by moving the decision threshold, but **generalization across generators is the real challenge, not raw accuracy on one.**
 - The Grad-CAM image showcases the parts of the image that the model focuses on to make decisions; mainly the main subject and not the background.
 
